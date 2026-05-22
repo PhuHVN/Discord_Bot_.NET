@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="MyDiscordApp.Api/MyDiscordApp.Api.csproj" />
+  <Project Path="MyDiscordApp.Application/MyDiscordApp.Application.csproj" Id="bb983480-20c6-459c-b95f-e30355700579" />
+  <Project Path="MyDiscordApp.Bot/MyDiscordApp.Bot.csproj" />
+  <Project Path="MyDiscordApp.Domain/MyDiscordApp.Domain.csproj" Id="07d8f85f-5dea-4c2c-ae15-51128b17388e" />
+  <Project Path="MyDiscordApp.Infrastructure/MyDiscordApp.Infrastructure.csproj" Id="6f0e94cb-c272-4fca-bad3-b51669f41dab" />
+</Solution>

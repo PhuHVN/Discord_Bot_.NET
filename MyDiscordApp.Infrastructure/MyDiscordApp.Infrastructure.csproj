@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MyDiscordApp.Application\MyDiscordApp.Application.csproj" />
+    <ProjectReference Include="..\MyDiscordApp.Domain\MyDiscordApp.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="ExternalServices/prompts/prompt.txt" />
+  </ItemGroup>
+
+</Project>
