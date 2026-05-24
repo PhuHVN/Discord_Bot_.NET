@@ -29,20 +29,20 @@ public class SeedNotifierService : BackgroundService
         //         await TalkAsync();
         //     }
         // }, stoppingToken);
-        var seedTask = Task.Run(async () =>
-        {
+        // var seedTask = Task.Run(async () =>
+        // {
 
-            var delay = GetDelayUntilNextMinute();
-            await Task.Delay(delay, stoppingToken);
+        //     var delay = GetDelayUntilNextMinute();
+        //     await Task.Delay(delay, stoppingToken);
 
-            await SendSeedInfoAsync();
-            using PeriodicTimer timer = new PeriodicTimer(TimeSpan.FromMinutes(5));
-            while (await timer.WaitForNextTickAsync(stoppingToken))
-            {
-                await SendSeedInfoAsync();
-            }
-        }, stoppingToken);
-        await Task.WhenAll(seedTask);
+        //     await SendSeedInfoAsync();
+        //     using PeriodicTimer timer = new PeriodicTimer(TimeSpan.FromMinutes(5));
+        //     while (await timer.WaitForNextTickAsync(stoppingToken))
+        //     {
+        //         await SendSeedInfoAsync();
+        //     }
+        // }, stoppingToken);
+        // await Task.WhenAll(seedTask);
     }
 
     private async Task TalkAsync()

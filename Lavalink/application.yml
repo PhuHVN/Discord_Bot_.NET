@@ -7,7 +7,7 @@ lavalink:
       repository: "https://maven.lavalink.dev/releases"
 
   server:
-    password: ""
+    password: "youshallnotpass"
     sources:
       youtube: false
       soundcloud: true

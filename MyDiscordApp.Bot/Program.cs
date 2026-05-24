@@ -27,8 +27,16 @@ builder.Services.AddSingleton(new DiscordSocketClient(new DiscordSocketConfig
 builder.Services.AddLavalink();
 builder.Services.Configure<LavalinkNodeOptions>(options =>
 {
-    options.BaseAddress = new Uri("http://localhost:2333");
-    options.WebSocketUri = new Uri("ws://localhost:2333");
+    var lavalinkHostname = builder.Configuration["Lavalink:Hostname"] ?? "localhost";
+    var lavalinkPort = builder.Configuration.GetValue<int>("Lavalink:Port") == 0
+        ? 2333
+        : builder.Configuration.GetValue<int>("Lavalink:Port");
+
+    var baseAddress = $"http://{lavalinkHostname}:{lavalinkPort}";
+    var webSocketUri = $"ws://{lavalinkHostname}:{lavalinkPort}";
+
+    options.BaseAddress = new Uri(baseAddress);
+    options.WebSocketUri = new Uri(webSocketUri);
     options.HttpClientName = "Lavalink";
 });
 
