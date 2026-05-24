@@ -1,9 +1,16 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
+using Lavalink4NET;
+using Lavalink4NET.DiscordNet;
+using Lavalink4NET.Extensions;
+using Lavalink4NET.Players;
+using Lavalink4NET.Rest.Entities.Tracks;
+using Microsoft.Extensions.Options;
 using MyDiscordApp.Application.Interface;
 
-namespace MyDiscordApp.Bot.Service
+
+namespace MyDiscordApp.Bot.Command
 {
     public class GeneralModule : InteractionModuleBase<SocketInteractionContext>
     {
@@ -11,12 +18,16 @@ namespace MyDiscordApp.Bot.Service
         private readonly ISeedService _seedService;
         private readonly ITalkService _talkService;
         private readonly IConfiguration _configuration;
-        public GeneralModule(IMemeService memeService, ISeedService seedService, ITalkService talkService, IConfiguration configuration)
+        private readonly IAudioService _audioService;
+
+        public GeneralModule(IMemeService memeService, ISeedService seedService
+        , ITalkService talkService, IConfiguration configuration, IAudioService audioService, IOptions<LavalinkPlayerOptions> playerOptions)
         {
             _memeService = memeService;
             _seedService = seedService;
             _talkService = talkService;
             _configuration = configuration;
+            _audioService = audioService;
         }
 
 
@@ -146,5 +157,6 @@ namespace MyDiscordApp.Bot.Service
                 await RespondAsync("You are not the bot owner.");
             }
         }
+
     }
 }

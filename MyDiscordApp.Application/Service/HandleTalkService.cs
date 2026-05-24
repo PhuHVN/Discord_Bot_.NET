@@ -20,7 +20,7 @@ public class HandleTalkService : IHandleTalkService
         var response = string.Empty;
         switch (messToLower)
         {
-            case string s when s.Contains("hello") || s.Contains("hi") || s.Contains("hey"):
+            case string s when s.Contains("hello") || s.Contains("chào") || s.Contains("hey"):
                 // Special response for owner
                 if (userId == ownerId)
                 {

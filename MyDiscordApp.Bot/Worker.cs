@@ -2,7 +2,7 @@ using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
 using System.Reflection;
-
+using Lavalink4NET;
 namespace MyDiscordApp.Bot
 {
     public class Worker : BackgroundService
@@ -14,6 +14,7 @@ namespace MyDiscordApp.Bot
         private readonly IServiceProvider _services;
         private readonly IServiceScopeFactory _serviceScopeFactory;
         private readonly GuildActivityTracker _activityTracker;
+        private readonly IAudioService _lavaNode;
 
 
         public Worker(
@@ -23,6 +24,7 @@ namespace MyDiscordApp.Bot
             ILogger<Worker> logger,
             IServiceProvider services,
             IServiceScopeFactory serviceScopeFactory,
+            IAudioService lavaNode,
             GuildActivityTracker activityTracker
             )
         {
@@ -33,6 +35,8 @@ namespace MyDiscordApp.Bot
             _services = services;
             _serviceScopeFactory = serviceScopeFactory;
             _activityTracker = activityTracker;
+            _lavaNode = lavaNode;
+
 
         }
 
@@ -112,7 +116,6 @@ namespace MyDiscordApp.Bot
             {
                 throw new InvalidOperationException("Missing or invalid configuration: Discord:GuildId");
             }
-
             await _interactions.RegisterCommandsToGuildAsync(guildId);
             _logger.LogInformation("Registered commands for guild {GuildId}", guildId);
         }
