@@ -15,4 +15,9 @@
     <EmbeddedResource Include="ExternalServices/prompts/prompt.txt" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Lavalink4NET" Version="4.2.1" />
+    <PackageReference Include="Lavalink4NET.Discord.NET" Version="4.2.1" />
+  </ItemGroup>
+
 </Project>

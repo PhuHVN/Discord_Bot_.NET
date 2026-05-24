@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  lavalink:
+    image: ghcr.io/lavalink-devs/lavalink:latest
+    container_name: lavalink
+    restart: unless-stopped
+    environment:
+      - LAVALINK_SERVER_PASSWORD=youshallnotpass
+    ports:
+      - "2333:2333"
+    volumes:
+      - ./Lavalink/application.yml:/opt/Lavalink/application.yml
+      - ./Lavalink/plugins:/opt/Lavalink/plugins
+    networks:
+      - discord-network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "2333"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
+
+  bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: discord-bot
+    restart: unless-stopped
+    depends_on:
+      - lavalink
+    environment:
+      - Lavalink__Hostname=lavalink
+      - Lavalink__Port=2333
+      - Lavalink__Password=youshallnotpass
+      - Discord__Token=${DISCORD_TOKEN}
+      - Discord__GuildId=${DISCORD_GUILD_ID}
+      - Discord__BotSeedChannelId=${DISCORD_BOT_SEED_CHANNEL_ID}
+      - Discord__ChatChannelId=${DISCORD_CHAT_CHANNEL_ID}
+      - Gemini__ApiKey=${GEMINI_APIKEY}
+    volumes:
+      - ./MyDiscordApp.Bot/appsettings.json:/app/appsettings.json:ro
+    networks:
+      - discord-network
+
+networks:
+  discord-network:
+    driver: bridge

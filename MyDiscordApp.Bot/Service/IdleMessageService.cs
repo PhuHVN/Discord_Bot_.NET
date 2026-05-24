@@ -6,7 +6,7 @@ public class IdleMessageService : BackgroundService
     private readonly IServiceScopeFactory _serviceScopeFactory;
     private readonly GuildActivityTracker _activityTracker;
     private readonly IConfiguration _configuration;
-    private readonly TimeSpan _idleTime = TimeSpan.FromMinutes(2);
+    private readonly TimeSpan _idleTime = TimeSpan.FromMinutes(10);
     private readonly string[] _funnyMessages =
     {
         "Server im quá... có ai còn sống không 😭",
