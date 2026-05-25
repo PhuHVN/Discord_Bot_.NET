@@ -37,11 +37,12 @@ services:
       - Lavalink__Hostname=lavalink
       - Lavalink__Port=2333
       - Lavalink__Password=youshallnotpass
-      - Discord__Token=${DISCORD_TOKEN}
-      - Discord__GuildId=${DISCORD_GUILD_ID}
-      - Discord__BotSeedChannelId=${DISCORD_BOT_SEED_CHANNEL_ID}
-      - Discord__ChatChannelId=${DISCORD_CHAT_CHANNEL_ID}
-      - Gemini__ApiKey=${GEMINI_APIKEY}
+      - Discord__Token=${DISCORD__TOKEN}
+      - Discord__GuildId=${DISCORD__GUILDID}
+      - Discord__BotSeedChannelId=${DISCORD__BOTSEEDCHANNELID}
+      - Discord__ChatChannelId=${DISCORD__CHATHANNELID}
+      - Discord__MusicChannelId=${DISCORD__MUSICHANNELID}
+      - Gemini__ApiKey=${GEMINI__APIKEY}
     networks:
       - discord-network
 

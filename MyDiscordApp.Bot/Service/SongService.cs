@@ -11,16 +11,18 @@ using Lavalink4NET.Tracks;
 
 namespace MyDiscordApp.Bot.Service
 {
-    public class SongService : InteractionModuleBase<SocketInteractionContext>
+    public class SongService : BotModuleBase
     {
         private static int _trackEndedSubscribed;
         private readonly IAudioService _audioService;
         private readonly ILogger<SongService> _logger;
+        private readonly IConfiguration _configuration;
 
-        public SongService(IAudioService audioService, ILogger<SongService> logger)
+        public SongService(IAudioService audioService, ILogger<SongService> logger, IConfiguration configuration) : base(configuration)
         {
             _audioService = audioService;
             _logger = logger;
+            _configuration = configuration;
 
             if (Interlocked.Exchange(ref _trackEndedSubscribed, 1) == 0)
             {
@@ -55,12 +57,21 @@ namespace MyDiscordApp.Bot.Service
                 await RespondAsync("Join a voice channel first.", ephemeral: true);
                 return;
             }
-
+            if (!await EnsureMusicVoiceChannelAsync())
+            {
+                return;
+            }
             try
             {
+                var options = new LavalinkPlayerOptions
+                {
+                    SelfDeaf = true,
+                    SelfMute = false
+                };
                 await _audioService.Players.JoinAsync(
                     guildId: Context.Guild.Id,
-                    voiceChannelId: user.VoiceChannel.Id);
+                    voiceChannelId: user.VoiceChannel.Id,
+                    options: options);
             }
             catch (InvalidOperationException ex) when (IsLavalinkNotReadyException(ex))
             {
@@ -93,6 +104,10 @@ namespace MyDiscordApp.Bot.Service
                 await RespondAsync("You need to be in a voice channel first.", ephemeral: true);
                 return;
             }
+            if (!await EnsureMusicVoiceChannelAsync())
+            {
+                return;
+            }
 
             ILavalinkPlayer player;
 
@@ -101,7 +116,12 @@ namespace MyDiscordApp.Bot.Service
                 player = await _audioService.Players.GetPlayerAsync(Context.Guild.Id)
                     ?? await _audioService.Players.JoinAsync(
                         guildId: Context.Guild.Id,
-                        voiceChannelId: user.VoiceChannel.Id);
+                        voiceChannelId: user.VoiceChannel.Id,
+                        options: new LavalinkPlayerOptions
+                        {
+                            SelfDeaf = true,
+                            SelfMute = false
+                        });
             }
             catch (InvalidOperationException ex) when (IsLavalinkNotReadyException(ex))
             {
@@ -143,6 +163,11 @@ namespace MyDiscordApp.Bot.Service
         [SlashCommand("skip", "Skip the current song")]
         public async Task Skip()
         {
+            if (!await EnsureMusicVoiceChannelAsync())
+            {
+                return;
+            }
+
             var player = await _audioService.Players.GetPlayerAsync(Context.Guild.Id);
             if (player?.CurrentTrack == null)
             {
@@ -157,6 +182,11 @@ namespace MyDiscordApp.Bot.Service
         [SlashCommand("queue", "Show the current music queue")]
         public async Task Queue()
         {
+            if (!await EnsureMusicVoiceChannelAsync())
+            {
+                return;
+            }
+
             var player = await _audioService.Players.GetPlayerAsync(Context.Guild.Id);
             var embed = SongUi.BuildQueueEmbed(player?.CurrentTrack, SongQueue.Snapshot(Context.Guild.Id));
 

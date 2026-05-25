@@ -59,7 +59,6 @@ namespace MyDiscordApp.Bot
                 }
                 ;
 
-
             };
             var modules = await _interactions.AddModulesAsync(
                 Assembly.GetExecutingAssembly(),
