@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   lavalink:
     image: ghcr.io/lavalink-devs/lavalink:latest
@@ -7,15 +5,19 @@ services:
     restart: unless-stopped
     environment:
       - LAVALINK_SERVER_PASSWORD=youshallnotpass
+      - SERVER_ADDRESS=0.0.0.0
+      - SERVER_PORT=2333
     ports:
       - "2333:2333"
+    expose:
+      - "2333"
     volumes:
       - ./Lavalink/application.yml:/opt/Lavalink/application.yml
       - ./Lavalink/plugins:/opt/Lavalink/plugins
     networks:
       - discord-network
     healthcheck:
-      test: ["CMD", "nc", "-z", "localhost", "2333"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:2333/version || curl -fsS http://localhost:2333/version || bash -ec ': > /dev/tcp/127.0.0.1/2333'"]
       interval: 15s
       timeout: 10s
       retries: 5
@@ -28,8 +30,10 @@ services:
     container_name: discord-bot
     restart: unless-stopped
     depends_on:
-      - lavalink
+      lavalink:
+        condition: service_healthy
     environment:
+      - ASPNETCORE_ENVIRONMENT=Production
       - Lavalink__Hostname=lavalink
       - Lavalink__Port=2333
       - Lavalink__Password=youshallnotpass
@@ -38,8 +42,6 @@ services:
       - Discord__BotSeedChannelId=${DISCORD_BOT_SEED_CHANNEL_ID}
       - Discord__ChatChannelId=${DISCORD_CHAT_CHANNEL_ID}
       - Gemini__ApiKey=${GEMINI_APIKEY}
-    volumes:
-      - ./MyDiscordApp.Bot/appsettings.json:/app/appsettings.json:ro
     networks:
       - discord-network
 

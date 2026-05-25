@@ -31,8 +31,12 @@ WORKDIR /app
 # Copy published application
 COPY --from=publish /app/publish .
 
+# Copy appsettings files explicitly
+COPY MyDiscordApp.Bot/appsettings*.json ./
+
 # Set environment variables
 ENV DOTNET_URLS=http://+:5000
+ENV ASPNETCORE_ENVIRONMENT=Production
 
 # Run the application
 ENTRYPOINT ["dotnet", "MyDiscordApp.Bot.dll"]

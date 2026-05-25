@@ -15,10 +15,12 @@ namespace MyDiscordApp.Bot.Service
     {
         private static int _trackEndedSubscribed;
         private readonly IAudioService _audioService;
+        private readonly ILogger<SongService> _logger;
 
-        public SongService(IAudioService audioService)
+        public SongService(IAudioService audioService, ILogger<SongService> logger)
         {
             _audioService = audioService;
+            _logger = logger;
 
             if (Interlocked.Exchange(ref _trackEndedSubscribed, 1) == 0)
             {
@@ -54,9 +56,23 @@ namespace MyDiscordApp.Bot.Service
                 return;
             }
 
-            await _audioService.Players.JoinAsync(
-                guildId: Context.Guild.Id,
-                voiceChannelId: user.VoiceChannel.Id);
+            try
+            {
+                await _audioService.Players.JoinAsync(
+                    guildId: Context.Guild.Id,
+                    voiceChannelId: user.VoiceChannel.Id);
+            }
+            catch (InvalidOperationException ex) when (IsLavalinkNotReadyException(ex))
+            {
+                _logger.LogWarning(
+                    ex,
+                    "Lavalink is not ready while joining guild {GuildId} and voice channel {VoiceChannelId}",
+                    Context.Guild.Id,
+                    user.VoiceChannel.Id);
+
+                await RespondAsync("Lavalink is still connecting. Please try again in a few seconds.", ephemeral: true);
+                return;
+            }
 
             var embed = new EmbedBuilder()
                 .WithTitle("Connected")
@@ -78,10 +94,26 @@ namespace MyDiscordApp.Bot.Service
                 return;
             }
 
-            var player = await _audioService.Players.GetPlayerAsync(Context.Guild.Id)
-                ?? await _audioService.Players.JoinAsync(
-                    guildId: Context.Guild.Id,
-                    voiceChannelId: user.VoiceChannel.Id);
+            ILavalinkPlayer player;
+
+            try
+            {
+                player = await _audioService.Players.GetPlayerAsync(Context.Guild.Id)
+                    ?? await _audioService.Players.JoinAsync(
+                        guildId: Context.Guild.Id,
+                        voiceChannelId: user.VoiceChannel.Id);
+            }
+            catch (InvalidOperationException ex) when (IsLavalinkNotReadyException(ex))
+            {
+                _logger.LogWarning(
+                    ex,
+                    "Lavalink is not ready while playing in guild {GuildId} and voice channel {VoiceChannelId}",
+                    Context.Guild.Id,
+                    user.VoiceChannel.Id);
+
+                await RespondAsync("Lavalink is still connecting. Please try again in a few seconds.", ephemeral: true);
+                return;
+            }
 
             var track = await _audioService.Tracks.LoadTrackAsync(query, TrackSearchMode.YouTube);
             if (track == null)
@@ -129,6 +161,13 @@ namespace MyDiscordApp.Bot.Service
             var embed = SongUi.BuildQueueEmbed(player?.CurrentTrack, SongQueue.Snapshot(Context.Guild.Id));
 
             await RespondAsync(embed: embed, components: SongUi.BuildControls(SongQueue.IsPaused(Context.Guild.Id)), ephemeral: true);
+        }
+
+        private static bool IsLavalinkNotReadyException(InvalidOperationException exception)
+        {
+            return exception.Message.Contains("session identifier", StringComparison.OrdinalIgnoreCase)
+                || exception.Message.Contains("node has been established", StringComparison.OrdinalIgnoreCase)
+                || exception.Message.Contains("StartAsync", StringComparison.OrdinalIgnoreCase);
         }
     }
 
