@@ -3,6 +3,8 @@ using Discord.Interactions;
 using Discord.WebSocket;
 using System.Reflection;
 using Lavalink4NET;
+using Lavalink4NET.Clients;
+using Lavalink4NET.Players;
 namespace MyDiscordApp.Bot
 {
     public class Worker : BackgroundService
@@ -110,7 +112,7 @@ namespace MyDiscordApp.Bot
         {
             _logger.LogInformation("Bot ready");
 
-            await _client.SetGameAsync("Call me A...");
+            await _client.SetGameAsync("Đang nhớ em...", type: ActivityType.Playing);
             var guildIdValue = _configuration["Discord:GuildId"];
             if (!ulong.TryParse(guildIdValue, out var guildId))
             {
@@ -118,6 +120,78 @@ namespace MyDiscordApp.Bot
             }
             await _interactions.RegisterCommandsToGuildAsync(guildId);
             _logger.LogInformation("Registered commands for guild {GuildId}", guildId);
+
+            // Health check Lavalink HTTP endpoint (non-blocking)
+            var lavalinkHostname = _configuration["Lavalink:Hostname"] ?? "localhost";
+            var lavalinkPort = _configuration.GetValue<int>("Lavalink:Port") == 0
+                ? 2333
+                : _configuration.GetValue<int>("Lavalink:Port");
+            var healthCheckUrl = $"http://{lavalinkHostname}:{lavalinkPort}/version";
+
+            int healthCheckRetries = 15;
+            int healthCheckDelay = 1000; // 1 second
+
+            using (var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(3) })
+            {
+                for (int i = 0; i < healthCheckRetries; i++)
+                {
+                    try
+                    {
+                        var response = await httpClient.GetAsync(healthCheckUrl);
+                        if (response.IsSuccessStatusCode)
+                        {
+                            _logger.LogInformation("Lavalink HTTP endpoint is healthy at {HealthCheckUrl}", healthCheckUrl);
+                            break;
+                        }
+
+                        _logger.LogDebug(
+                            "Lavalink health check returned {StatusCode} from {HealthCheckUrl}",
+                            response.StatusCode,
+                            healthCheckUrl);
+                    }
+                    catch (Exception ex)
+                    {
+                        if (i < healthCheckRetries - 1)
+                        {
+                            _logger.LogDebug(ex, "Lavalink health check failed (attempt {Attempt}/{MaxRetries}), retrying in {DelayMs}ms", i + 1, healthCheckRetries, healthCheckDelay);
+                            await Task.Delay(healthCheckDelay);
+                        }
+                        else
+                        {
+                            _logger.LogWarning(ex, "Lavalink HTTP endpoint not responding after {MaxRetries} attempts. Bot will continue but audio features may not work.", healthCheckRetries);
+                        }
+                    }
+                }
+            }
+
+            // Start Lavalink audio service with retry logic (continues even if health check failed)
+            int maxRetries = 15;
+            int retryDelay = 2000; // 2 seconds
+            for (int i = 0; i < maxRetries; i++)
+            {
+                try
+                {
+                    await _lavaNode.StartAsync();
+                    _logger.LogInformation("Lavalink audio service started successfully");
+
+                    // Wait for connection to fully establish
+                    await Task.Delay(3000); // 3 seconds for WebSocket to stabilize
+                    return;
+                }
+                catch (Exception ex)
+                {
+                    if (i < maxRetries - 1)
+                    {
+                        _logger.LogWarning(ex, "Failed to start Lavalink audio service (attempt {Attempt}/{MaxRetries}), retrying in {DelayMs}ms", i + 1, maxRetries, retryDelay);
+                        await Task.Delay(retryDelay);
+                    }
+                    else
+                    {
+                        _logger.LogError(ex, "Failed to start Lavalink audio service after {MaxRetries} attempts", maxRetries);
+                        throw;
+                    }
+                }
+            }
         }
 
         private async Task HandleInteraction(SocketInteraction interaction)

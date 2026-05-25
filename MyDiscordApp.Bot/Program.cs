@@ -25,19 +25,22 @@ builder.Services.AddSingleton(new DiscordSocketClient(new DiscordSocketConfig
 }));
 
 builder.Services.AddLavalink();
-builder.Services.Configure<LavalinkNodeOptions>(options =>
+builder.Services.ConfigureLavalink(options =>
 {
     var lavalinkHostname = builder.Configuration["Lavalink:Hostname"] ?? "localhost";
     var lavalinkPort = builder.Configuration.GetValue<int>("Lavalink:Port") == 0
         ? 2333
         : builder.Configuration.GetValue<int>("Lavalink:Port");
+    var lavalinkPassword = builder.Configuration["Lavalink:Password"] ?? "youshallnotpass";
 
     var baseAddress = $"http://{lavalinkHostname}:{lavalinkPort}";
-    var webSocketUri = $"ws://{lavalinkHostname}:{lavalinkPort}";
+    var webSocketUri = $"ws://{lavalinkHostname}:{lavalinkPort}/v4/websocket";
 
     options.BaseAddress = new Uri(baseAddress);
     options.WebSocketUri = new Uri(webSocketUri);
     options.HttpClientName = "Lavalink";
+    options.Passphrase = lavalinkPassword;
+    options.ReadyTimeout = TimeSpan.FromSeconds(30);
 });
 
 builder.Services.AddHttpClient("Lavalink");
@@ -46,7 +49,10 @@ builder.Services.AddSingleton(x =>
 {
     var client = x.GetRequiredService<DiscordSocketClient>();
 
-    return new InteractionService(client.Rest);
+    return new InteractionService(client.Rest, new InteractionServiceConfig
+    {
+        DefaultRunMode = RunMode.Async
+    });
 });
 
 builder.Services.AddScoped<GeneralModule>();
@@ -54,6 +60,7 @@ builder.Services.AddScoped<SongService>();
 builder.Services.AddScoped<SongComponentHandler>();
 builder.Services.AddHostedService<Worker>();
 builder.Services.AddHostedService<SeedNotifierService>();
+builder.Services.AddHostedService<VoiceIdleService>();
 builder.Services.AddSingleton<GuildActivityTracker>();
 builder.Services.AddHostedService<IdleMessageService>();
 
